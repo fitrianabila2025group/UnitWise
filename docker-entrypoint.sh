@@ -1,13 +1,14 @@
 #!/bin/sh
 set -e
 
-MAX_RETRIES=30
+PRISMA="./node_modules/.bin/prisma"
+MAX_RETRIES=60
 SLEEP_INTERVAL=2
 ATTEMPT=0
 
 echo "==> Waiting for database to be ready..."
 while [ "$ATTEMPT" -lt "$MAX_RETRIES" ]; do
-  if echo "SELECT 1" | npx prisma db execute --stdin >/dev/null 2>&1; then
+  if echo "SELECT 1" | "$PRISMA" db execute --stdin --url "$DATABASE_URL" 2>&1; then
     echo "==> Database is ready."
     break
   fi
@@ -22,10 +23,10 @@ if [ "$ATTEMPT" -ge "$MAX_RETRIES" ]; then
 fi
 
 echo "==> Running Prisma migrations..."
-npx prisma migrate deploy
+"$PRISMA" migrate deploy
 
 echo "==> Seeding database..."
-npx prisma db seed
+"$PRISMA" db seed || { echo "ERROR: Seed failed"; exit 1; }
 echo "==> Seed completed successfully."
 
 echo "==> Starting Next.js server..."
