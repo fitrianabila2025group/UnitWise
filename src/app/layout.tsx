@@ -62,6 +62,14 @@ export async function generateMetadata(): Promise<Metadata> {
       index: true,
       follow: true,
     },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "32x32" },
+        { url: "/icon.svg", type: "image/svg+xml" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+    manifest: "/site.webmanifest",
     other,
   };
 }
@@ -69,13 +77,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <head>
-        <AdsHead />
-      </head>
       <body className="min-h-screen font-sans antialiased">
         {children}
         <Toaster />
         <CookieConsent />
+        <AdsHead />
       </body>
     </html>
   );

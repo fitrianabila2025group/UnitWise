@@ -36,6 +36,7 @@ COPY --from=builder /app/public ./public
 # Prisma client + schema needed at runtime for migrations/seed
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/prisma ./prisma
 
 # tsx + its deps are needed by the seed script
@@ -60,6 +61,9 @@ RUN chmod +x /app/docker-entrypoint.sh
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 # Run as root for migrations, then drop to nextjs via entrypoint
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

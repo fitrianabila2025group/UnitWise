@@ -134,7 +134,7 @@ export function ConverterWidget({
         <div className="mt-4 flex items-center gap-3">
           <Label className="text-sm text-muted-foreground">Precision:</Label>
           <Select value={currentPrecision} onValueChange={setCurrentPrecision}>
-            <SelectTrigger className="w-24">
+            <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
