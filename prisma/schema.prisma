@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum ConversionType {
+  LINEAR
+  AFFINE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String
+  role          Role      @default(EDITOR)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  auditLogs     AuditLog[]
+}
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  units       Unit[]
+  seoPages    SeoPage[]
+  faqs        FAQ[]
+}
+
+model Unit {
+  id         String   @id @default(cuid())
+  name       String
+  symbol     String
+  slug       String   @unique
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  isBaseUnit Boolean  @default(false)
+  notes      String?  @db.Text
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  fromRules  ConversionRule[] @relation("FromUnit")
+  toRules    ConversionRule[] @relation("ToUnit")
+
+  @@index([categoryId])
+}
+
+model ConversionRule {
+  id           String         @id @default(cuid())
+  fromUnitId   String
+  fromUnit     Unit           @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
+  toUnitId     String
+  toUnit       Unit           @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Cascade)
+  type         ConversionType @default(LINEAR)
+  factor       Float
+  offset       Float          @default(0)
+  precision    Int            @default(6)
+  formulaText  String?        @db.Text
+  exampleText  String?        @db.Text
+  slug         String         @unique
+  isPopular    Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  seoPage      SeoPage?
+
+  @@unique([fromUnitId, toUnitId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
+  @@index([isPopular])
+}
+
+model SeoPage {
+  id               String   @id @default(cuid())
+  conversionRuleId String?  @unique
+  conversionRule   ConversionRule? @relation(fields: [conversionRuleId], references: [id], onDelete: Cascade)
+  categoryId       String?
+  category         Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  pageType         String   @default("conversion")
+  customTitle      String?  @db.Text
+  customMeta       String?  @db.Text
+  customIntro      String?  @db.Text
+  customExamples   String?  @db.Text
+  customFaqJson    String?  @db.Text
+  internalLinksJson String? @db.Text
+  lastUpdated      DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model SeoTemplate {
+  id            String   @id @default(cuid())
+  categorySlug  String?
+  templateType  String
+  template      String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([categorySlug, templateType])
+}
+
+model FAQ {
+  id           String   @id @default(cuid())
+  question     String   @db.Text
+  answer       String   @db.Text
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  conversionSlug String?
+  sortOrder    Int      @default(0)
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([conversionSlug])
+}
+
+model InternalLinkBlock {
+  id        String   @id @default(cuid())
+  pageSlug  String
+  blockType String   @default("related")
+  linksJson String   @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageSlug])
+}
+
+model AdSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+}

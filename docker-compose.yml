@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: unitwise
+      POSTGRES_PASSWORD: unitwise_secure_pw_2024
+      POSTGRES_DB: unitwise
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unitwise -d unitwise"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://unitwise:unitwise_secure_pw_2024@db:5432/unitwise?schema=public"
+      NEXTAUTH_URL: "https://unitwise.online"
+      NEXTAUTH_SECRET: "change-me-to-a-real-secret-in-production"
+      ADMIN_EMAIL: "admin@unitwise.online"
+      ADMIN_PASSWORD: "Anonymous263"
+
+volumes:
+  pgdata:
