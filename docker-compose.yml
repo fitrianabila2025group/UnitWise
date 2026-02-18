@@ -17,9 +17,7 @@ services:
       retries: 10
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mpratamamail/unitwise:latest
     restart: unless-stopped
     depends_on:
       db:
