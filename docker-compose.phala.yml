@@ -22,7 +22,7 @@ services:
       retries: 10
 
   app:
-    image: yourdockerhub/unitwise:latest
+    image: mpratamamail/unitwise:latest
     restart: unless-stopped
     depends_on:
       db:
